@@ -1,8 +1,9 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
-  [Header("Movement Settings")]
+    [Header("Movement Settings")]
     public float moveSpeed = 5f;
     public float jumpForce = 7f;
 
@@ -11,24 +12,28 @@ public class Player : MonoBehaviour
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
 
+    [Header("Death Settings")]
+    public AudioClip deathSound;
+    private AudioSource audioSource;
+
     private Rigidbody2D rb;
     private float moveInput;
     private bool isGrounded;
+    private bool isDead = false;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
     {
-        // Player horizontal input
-        moveInput = Input.GetAxisRaw("Horizontal");
+        if (isDead) return;
 
-        // Check if grounded
+        moveInput = Input.GetAxisRaw("Horizontal");
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
-        // Jump
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
@@ -37,7 +42,34 @@ public class Player : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Apply horizontal movement
+        if (isDead) return;
+
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
+    }
+
+
+    public void KillPlayer()
+    {
+        if (isDead) return;
+        isDead = true;
+
+        rb.linearVelocity = Vector2.zero;
+
+        // Play sound
+        if (deathSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(deathSound);
+            // float soundLength = deathSound.length;
+            Invoke("RestartScene", 4f); // wait EXACTLY the sound length
+        }
+        else
+        {
+            RestartScene();
+        }
+    }
+
+    void RestartScene()
+    {
+        SceneManager.LoadScene("SampleScene");
     }
 }
