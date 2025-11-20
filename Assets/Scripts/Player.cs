@@ -7,18 +7,18 @@ public class Player : MonoBehaviour
     public float moveSpeed = 5f;
     public float jumpForce = 7f;
 
-    [Header("Ground Check Settings")]
+    [Header("Ground Check")]
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
 
-    [Header("Death Settings")]
+    [Header("Death")]
     public AudioClip deathSound;
     private AudioSource audioSource;
 
-    [Header("Other Stuff")]
+    [Header("References")]
+    public Transform spriteTransform; // child sprite to flip
     public GunScript equippedGun;
-
 
     private Rigidbody2D rb;
     private float moveInput;
@@ -35,19 +35,8 @@ public class Player : MonoBehaviour
     {
         if (isDead) return;
 
-        if (Input.GetMouseButton(0))
-        {
-            if (equippedGun != null)
-                equippedGun.TryShoot();
-        }
-
-        moveInput = Input.GetAxisRaw("Horizontal");
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
-
-        if (Input.GetButtonDown("Jump") && isGrounded)
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-        }
+        HandleMovement();
+        HandleShooting();
     }
 
     void FixedUpdate()
@@ -57,20 +46,57 @@ public class Player : MonoBehaviour
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
     }
 
+    void HandleMovement()
+    {
+        moveInput = Input.GetAxisRaw("Horizontal");
+
+        // Flip sprite + tell gun to flip
+        if (moveInput > 0)
+        {
+            spriteTransform.localScale = new Vector3(1, 1, 1);
+            if (equippedGun) equippedGun.SetFacing(true);
+        }
+        else if (moveInput < 0)
+        {
+            spriteTransform.localScale = new Vector3(-1, 1, 1);
+            if (equippedGun) equippedGun.SetFacing(false);
+        }
+
+        // Ground check
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+
+        // Jump
+        if (Input.GetButtonDown("Jump") && isGrounded)
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+    }
+
+    void HandleShooting()
+    {
+        bool shoot = false;
+
+        // PC
+        if (Input.mousePresent && Input.GetMouseButton(0))
+            shoot = true;
+
+        // Mobile
+        else if (Input.touchCount > 0 &&
+                 (Input.GetTouch(0).phase == TouchPhase.Began || Input.GetTouch(0).phase == TouchPhase.Moved))
+            shoot = true;
+
+        if (shoot && equippedGun != null)
+            equippedGun.TryShoot();
+    }
 
     public void KillPlayer()
     {
         if (isDead) return;
         isDead = true;
-
         rb.linearVelocity = Vector2.zero;
 
-        // Play sound
-        if (deathSound != null && audioSource != null)
+        if (deathSound && audioSource)
         {
             audioSource.PlayOneShot(deathSound);
-            // float soundLength = deathSound.length;
-            Invoke("RestartScene", 4f); // wait EXACTLY the sound length
+            Invoke("RestartScene", 4f);
         }
         else
         {
@@ -80,6 +106,6 @@ public class Player : MonoBehaviour
 
     void RestartScene()
     {
-        SceneManager.LoadScene("SampleScene");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

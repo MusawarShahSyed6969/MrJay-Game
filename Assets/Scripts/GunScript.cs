@@ -13,94 +13,54 @@ public class GunScript : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip shootSound;
     public GameObject hitEffect;
+    public Transform GunPos;
 
     private float nextFireTime;
 
-    RaycastHit2D lastHit;  // for gizmos
-
-
-    void Update()
+    // Called by Player script
+    public void SetFacing(bool facingRight)
     {
-         AimAtPointer();
-    }
-    
-    public void TryShoot()
-    {
-        if (Time.time >= nextFireTime)
+        if (facingRight)
+            GunPos.localRotation = Quaternion.Euler(0, 0, 0);   // face right
+        else
         {
-            nextFireTime = Time.time + fireRate;
-            Shoot();
+             GunPos.localRotation = Quaternion.Euler(0, 180, 0); // face left
+            Debug.Log("Left Mode");
         }
     }
 
-    void Shoot()
+    public void TryShoot()
     {
+        if (Time.time < nextFireTime) return;
+        nextFireTime = Time.time + fireRate;
+
         if (audioSource && shootSound)
             audioSource.PlayOneShot(shootSound);
 
-        // Use layer mask properly
-        lastHit = Physics2D.Raycast(firePoint.position, firePoint.right, range, hitLayers);
+        // Raycast direction
+        Vector2 dir = GunPos.right;
 
-        if (lastHit.collider != null)
+        RaycastHit2D hit = Physics2D.Raycast(firePoint.position, dir, range, hitLayers);
+
+        if (hit.collider != null)
         {
-            Debug.Log("Hit: " + lastHit.collider.name);
+            Debug.Log("Hit: " + hit.collider.name);
 
             if (hitEffect)
             {
-                GameObject effect = Instantiate(hitEffect, lastHit.point, Quaternion.identity);
+                GameObject effect = Instantiate(hitEffect, hit.point, Quaternion.identity);
                 Destroy(effect, 0.5f);
             }
         }
-        else
-        {
-            Debug.Log("NO HIT");
-        }
     }
 
-    private void OnDrawGizmos()
+    // Gizmo preview in Scene View
+    void OnDrawGizmos()
     {
         if (firePoint == null) return;
+      
 
-        Gizmos.color = Color.red;
-
-        // If hit something
-        if (lastHit.collider != null)
-        {
-            Gizmos.DrawLine(firePoint.position, lastHit.point);
-            Gizmos.DrawSphere(lastHit.point, 0.05f);
-        }
-        else
-        {
-            // Draw full ray range
-            Gizmos.DrawLine(firePoint.position, firePoint.position + firePoint.right * range);
-        }
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(firePoint.position, firePoint.position + GunPos.right * range);
     }
-
-
-    void AimAtPointer()
-{
-    Vector3 pointerPos;
-
-    // Mouse (PC)
-    if (Input.mousePresent)
-    {
-        pointerPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-    }
-    // Touch (Mobile)
-    else if (Input.touchCount > 0)
-    {
-        pointerPos = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
-    }
-    else
-    {
-        return; // nothing to aim at yet
-    }
-
-    pointerPos.z = 0;
-
-    Vector2 direction = (pointerPos - transform.position).normalized;
-    float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-    transform.rotation = Quaternion.Euler(0, 0, angle);
-}
 }
