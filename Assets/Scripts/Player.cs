@@ -16,6 +16,10 @@ public class Player : MonoBehaviour
     public AudioClip deathSound;
     private AudioSource audioSource;
 
+    [Header("Other Stuff")]
+    public GunScript equippedGun;
+
+
     private Rigidbody2D rb;
     private float moveInput;
     private bool isGrounded;
@@ -30,6 +34,12 @@ public class Player : MonoBehaviour
     void Update()
     {
         if (isDead) return;
+
+        if (Input.GetMouseButton(0))
+        {
+            if (equippedGun != null)
+                equippedGun.TryShoot();
+        }
 
         moveInput = Input.GetAxisRaw("Horizontal");
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
