@@ -3,9 +3,18 @@ using System.Collections;
 using UnityEngine.SceneManagement;
 
 
-public class EnemyScript : MonoBehaviour
+public class EnemyScript : HealthComponent
 {
 
+    // public float maxHealth = 100f;
+    // public float currentHealth;
+
+    public bool isDead = false;
+
+    [Header("References")]
+        public GameObject deathEffect;
+
+    HealthComponent health;
     public Transform pointA;
     public Transform pointB;
     public float speed = 2f;
@@ -15,7 +24,20 @@ public class EnemyScript : MonoBehaviour
 
     private void Start()
     {
+
         StartCoroutine(PatrolRoutine());
+        health = GetComponent<HealthComponent>();
+        // currentHealth = maxHealth;
+    }
+
+     private void Update() {
+
+        if(isDead)
+        {
+            Destroy(this);
+        }
+
+        // Checkhealth();    
     }
 
     IEnumerator PatrolRoutine()
@@ -58,5 +80,15 @@ public class EnemyScript : MonoBehaviour
                 player.KillPlayer();
             }
         }
+    }
+
+       protected override void Die()
+    {
+        Debug.Log("Enemy died!");
+
+        if (deathEffect)
+            Instantiate(deathEffect, transform.position, Quaternion.identity);
+
+        Destroy(gameObject);
     }
 }

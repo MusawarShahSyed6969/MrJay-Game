@@ -15,6 +15,8 @@ public class GunScript : MonoBehaviour
     public GameObject hitEffect;
     public Transform GunPos;
 
+    HealthComponent health;
+
     private float nextFireTime;
 
     // Called by Player script
@@ -24,7 +26,7 @@ public class GunScript : MonoBehaviour
             GunPos.localRotation = Quaternion.Euler(0, 0, 0);   // face right
         else
         {
-             GunPos.localRotation = Quaternion.Euler(0, 180, 0); // face left
+            GunPos.localRotation = Quaternion.Euler(0, 180, 0); // face left
             Debug.Log("Left Mode");
         }
     }
@@ -51,6 +53,12 @@ public class GunScript : MonoBehaviour
                 GameObject effect = Instantiate(hitEffect, hit.point, Quaternion.identity);
                 Destroy(effect, 0.5f);
             }
+
+              // OOP magic: works with ANY damageable object
+            IDamageable dmg = hit.collider.GetComponent<IDamageable>();
+            if (dmg != null)
+                dmg.TakeDamage(damage);
+
         }
     }
 
@@ -58,7 +66,7 @@ public class GunScript : MonoBehaviour
     void OnDrawGizmos()
     {
         if (firePoint == null) return;
-      
+
 
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(firePoint.position, firePoint.position + GunPos.right * range);

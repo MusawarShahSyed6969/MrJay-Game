@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class Player : MonoBehaviour
+public class Player : HealthComponent
 {
     [Header("Movement Settings")]
     public float moveSpeed = 5f;
@@ -107,5 +107,18 @@ public class Player : MonoBehaviour
     void RestartScene()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    protected override void Die()
+    {
+        Debug.Log("Player died!");
+
+        // Example: disable controls
+        Player player = GetComponent<Player>();
+        if (player)
+            player.KillPlayer();
+
+        // Or restart level
+        // SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
