@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "MrJay-Game.slnx"
+    "dotnet.defaultSolution": "KODU.slnx"
 }

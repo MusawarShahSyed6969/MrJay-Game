@@ -20,7 +20,7 @@ public class Player : HealthComponent
     public Transform spriteTransform; // child sprite to flip
     public GunScript equippedGun;
 
-    private Rigidbody2D rb;
+    public Rigidbody2D rb;
     private float moveInput;
     private bool isGrounded;
     private bool isDead = false;

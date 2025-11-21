@@ -13,6 +13,7 @@ public class GunScript : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip shootSound;
     public GameObject hitEffect;
+    public GameObject FireEffect;
     public Transform GunPos;
 
     HealthComponent health;
@@ -27,7 +28,7 @@ public class GunScript : MonoBehaviour
         else
         {
             GunPos.localRotation = Quaternion.Euler(0, 180, 0); // face left
-            Debug.Log("Left Mode");
+          
         }
     }
 
@@ -43,6 +44,13 @@ public class GunScript : MonoBehaviour
         Vector2 dir = GunPos.right;
 
         RaycastHit2D hit = Physics2D.Raycast(firePoint.position, dir, range, hitLayers);
+
+
+            if(FireEffect)
+            {
+                GameObject fEffect = Instantiate(FireEffect,firePoint.position,Quaternion.identity);
+                Destroy(fEffect,0.5f);
+            }
 
         if (hit.collider != null)
         {
