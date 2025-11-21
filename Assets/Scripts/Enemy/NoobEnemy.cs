@@ -10,12 +10,15 @@ public class NoobEnemy : EnemyScript
     public Transform pointB;
 
     [Header("Settings")]
+    public float playerJumpSpeed = 2;
     public float shootingRange = 5f;
     public float shootingCooldown = 1.5f;
     public float speed = 2f;
     public float waitTime = 2f;
 
     private bool goingToA = true;
+
+
 
     void Start()
     {
@@ -120,7 +123,7 @@ public class NoobEnemy : EnemyScript
 
   
 
-    player.rb.linearVelocity = new Vector2(player.rb.linearVelocity.x, player.jumpForce * 3);
+    player.rb.linearVelocity = new Vector2(player.rb.linearVelocity.x, player.jumpForce * playerJumpSpeed);
 }
 
 }
