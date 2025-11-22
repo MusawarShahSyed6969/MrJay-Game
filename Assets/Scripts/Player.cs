@@ -1,11 +1,18 @@
+using Microsoft.Unity.VisualStudio.Editor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+
 
 public class Player : HealthComponent
 {
     [Header("Movement Settings")]
     public float moveSpeed = 5f;
     public float jumpForce = 7f;
+
+    [Header("Gravity Settings")]
+    public float normalGravity = 1f;   // gravity while rising or grounded
+    public float fallGravity = 1.5f;     // stronger gravity when falling
 
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -20,6 +27,9 @@ public class Player : HealthComponent
     public Transform spriteTransform; // child sprite to flip
     public GunScript equippedGun;
 
+   public UnityEngine.UI.Image healthBarFill;
+
+
     public Rigidbody2D rb;
     private float moveInput;
     private bool isGrounded;
@@ -29,14 +39,23 @@ public class Player : HealthComponent
     {
         rb = GetComponent<Rigidbody2D>();
         audioSource = GetComponent<AudioSource>();
+
+        // set initial gravity
+        rb.gravityScale = normalGravity;
     }
 
     void Update()
     {
         if (isDead) return;
 
+        healthBarFill.fillAmount = currentHealth / maxHealth;
+
+        if (currentHealth < 1)
+            KillPlayer();
+
         HandleMovement();
         HandleShooting();
+        HandleGravity();
     }
 
     void FixedUpdate()
@@ -70,6 +89,19 @@ public class Player : HealthComponent
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
     }
 
+    void HandleGravity()
+    {
+        // Only apply stronger gravity AFTER peak (when velocity is negative)
+        if (rb.linearVelocity.y < 0)
+        {
+            rb.gravityScale = fallGravity;
+        }
+        else
+        {
+            rb.gravityScale = normalGravity;
+        }
+    }
+
     void HandleShooting()
     {
         bool shoot = false;
@@ -92,7 +124,7 @@ public class Player : HealthComponent
         if (isDead) return;
         isDead = true;
         rb.linearVelocity = Vector2.zero;
-
+        Destroy(gameObject, 2f);
         if (deathSound && audioSource)
         {
             audioSource.PlayOneShot(deathSound);
@@ -113,12 +145,8 @@ public class Player : HealthComponent
     {
         Debug.Log("Player died!");
 
-        // Example: disable controls
         Player player = GetComponent<Player>();
         if (player)
             player.KillPlayer();
-
-        // Or restart level
-        // SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

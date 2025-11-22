@@ -16,25 +16,27 @@ public class NoobEnemy : EnemyScript
     public float speed = 2f;
     public float waitTime = 2f;
 
-    private bool goingToA = true;
+    public float DamageAmount = 15f;
 
-    // ANIM -----------------------------
+    [Header("Continuous Damage")]
+    public float damageInterval = 2f;   // Damage every 2 seconds after first hit
+
+    private bool goingToA = true;
     private Animator anim;
-    // ----------------------------------
+
+    // Damage system
+    private Player playerRef;
+    private float damageTimer = 0f;
 
     void Start()
     {
-        // ANIM
         anim = GetComponent<Animator>();
         if (!anim)
-        {
-            Debug.Log("Animator not found");
-        }
+            Debug.LogWarning("Animator not found!");
 
         if (playerpos == null)
         {
             GameObject p = GameObject.FindGameObjectWithTag("Player");
-
             if (p != null)
                 playerpos = p.transform;
         }
@@ -43,21 +45,25 @@ public class NoobEnemy : EnemyScript
         StartCoroutine(ShootingRoutine());
     }
 
+    // ---------------------- HELPER: FIND PLAYER ---------------------
+    private Player GetPlayerFromCollider(Component col)
+    {
+        return col.GetComponent<Player>()
+            ?? col.GetComponentInParent<Player>()
+            ?? col.GetComponentInChildren<Player>();
+    }
+
+    // ------------------------- SHOOTING ------------------------------
     IEnumerator ShootingRoutine()
     {
         while (true)
         {
-            if (playerpos == null)
+            if (playerpos != null)
             {
-                yield return new WaitForSeconds(shootingCooldown);
-                continue;
-            }
+                float dist = Vector2.Distance(transform.position, playerpos.position);
 
-            float dist = Vector2.Distance(transform.position, playerpos.position);
-
-            if (dist <= shootingRange)
-            {
-                ShootToPlayer();
+                if (dist <= shootingRange)
+                    ShootToPlayer();
             }
 
             yield return new WaitForSeconds(shootingCooldown);
@@ -72,13 +78,13 @@ public class NoobEnemy : EnemyScript
         Destroy(shoot, 4f);
     }
 
+    // ------------------------- PATROL -------------------------------
     IEnumerator PatrolRoutine()
     {
         while (true)
         {
             Vector3 target = goingToA ? pointA.position : pointB.position;
 
-            // ANIM: start walking
             anim.SetBool("isWalking", true);
 
             while (Vector2.Distance(transform.position, target) > 0.05f)
@@ -88,27 +94,66 @@ public class NoobEnemy : EnemyScript
                     target,
                     speed * Time.deltaTime
                 );
-
                 yield return null;
             }
 
-            // Arrived → idle
             transform.position = target;
-            anim.SetBool("isWalking", false); // ANIM: idle
+            anim.SetBool("isWalking", false);
+
             yield return new WaitForSeconds(waitTime);
 
             goingToA = !goingToA;
         }
     }
 
-    void OnTriggerEnter2D(Collider2D collision)
+    // -------------------- DAMAGE ON COLLISION -----------------------
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (!collision.gameObject.CompareTag("Player")) return;
+
+        // Find the real Player script on parent
+        playerRef = GetPlayerFromCollider(collision.collider);
+
+        if (playerRef != null)
+        {
+            // FIRST INSTANT DAMAGE
+            playerRef.TakeDamage(DamageAmount);
+
+            // Reset cooldown timer for next hits
+            damageTimer = 0f;
+        }
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (playerRef == null) return;
+
+        damageTimer += Time.deltaTime;
+
+        // Damage after cooldown
+        if (damageTimer >= damageInterval)
+        {
+            playerRef.TakeDamage(DamageAmount);
+            damageTimer = 0f;
+        }
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            playerRef = null;
+            damageTimer = 0f; // reset timer
+        }
+    }
+
+    // ------------------ KNOCK-UP TRIGGER ----------------------------
+    private void OnTriggerEnter2D(Collider2D collision)
     {
         if (!collision.CompareTag("Player")) return;
 
-        player = collision.GetComponent<Player>()
-              ?? collision.GetComponentInParent<Player>()
-              ?? collision.GetComponentInChildren<Player>();
-
+        Player player = GetPlayerFromCollider(collision);
         if (!player) return;
 
         player.rb.linearVelocity = new Vector2(
