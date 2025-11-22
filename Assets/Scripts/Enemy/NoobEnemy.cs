@@ -4,7 +4,7 @@ using System.Collections;
 public class NoobEnemy : EnemyScript
 {
     [Header("References")]
-    public Transform playerpos;            // Player transform
+    public Transform playerpos;
     public GameObject shootObject;
     public Transform pointA;
     public Transform pointB;
@@ -18,26 +18,27 @@ public class NoobEnemy : EnemyScript
 
     private bool goingToA = true;
 
-
+    // ANIM -----------------------------
+    private Animator anim;
+    // ----------------------------------
 
     void Start()
     {
-        // Debug: check for player
+        // ANIM
+        anim = GetComponent<Animator>();
+        if (!anim)
+        {
+            Debug.Log("Animator not found");
+        }
+
         if (playerpos == null)
         {
-
             GameObject p = GameObject.FindGameObjectWithTag("Player");
 
             if (p != null)
-            {
                 playerpos = p.transform;
-               
-            }
-           
         }
-      
 
-        // Start routines
         StartCoroutine(PatrolRoutine());
         StartCoroutine(ShootingRoutine());
     }
@@ -48,7 +49,6 @@ public class NoobEnemy : EnemyScript
         {
             if (playerpos == null)
             {
-                
                 yield return new WaitForSeconds(shootingCooldown);
                 continue;
             }
@@ -57,10 +57,8 @@ public class NoobEnemy : EnemyScript
 
             if (dist <= shootingRange)
             {
-              
                 ShootToPlayer();
             }
-           
 
             yield return new WaitForSeconds(shootingCooldown);
         }
@@ -68,15 +66,10 @@ public class NoobEnemy : EnemyScript
 
     void ShootToPlayer()
     {
-        if (shootObject == null)
-        {
-
-            return;
-        }
+        if (shootObject == null) return;
 
         GameObject shoot = Instantiate(shootObject, transform.position, Quaternion.identity);
         Destroy(shoot, 4f);
-        
     }
 
     IEnumerator PatrolRoutine()
@@ -84,7 +77,9 @@ public class NoobEnemy : EnemyScript
         while (true)
         {
             Vector3 target = goingToA ? pointA.position : pointB.position;
-           
+
+            // ANIM: start walking
+            anim.SetBool("isWalking", true);
 
             while (Vector2.Distance(transform.position, target) > 0.05f)
             {
@@ -93,37 +88,32 @@ public class NoobEnemy : EnemyScript
                     target,
                     speed * Time.deltaTime
                 );
+
                 yield return null;
             }
 
-          
-
+            // Arrived → idle
             transform.position = target;
+            anim.SetBool("isWalking", false); // ANIM: idle
             yield return new WaitForSeconds(waitTime);
+
             goingToA = !goingToA;
         }
     }
 
-
-
     void OnTriggerEnter2D(Collider2D collision)
-{
-    if (!collision.CompareTag("Player")) return;
-
-  
-    player = collision.GetComponent<Player>() 
-          ?? collision.GetComponentInParent<Player>() 
-          ?? collision.GetComponentInChildren<Player>();
-
-    if (!player)
     {
-      
-        return;
+        if (!collision.CompareTag("Player")) return;
+
+        player = collision.GetComponent<Player>()
+              ?? collision.GetComponentInParent<Player>()
+              ?? collision.GetComponentInChildren<Player>();
+
+        if (!player) return;
+
+        player.rb.linearVelocity = new Vector2(
+            player.rb.linearVelocity.x,
+            player.jumpForce * playerJumpSpeed
+        );
     }
-
-  
-
-    player.rb.linearVelocity = new Vector2(player.rb.linearVelocity.x, player.jumpForce * playerJumpSpeed);
-}
-
 }
