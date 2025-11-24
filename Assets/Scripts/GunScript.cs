@@ -8,28 +8,27 @@ public class GunScript : MonoBehaviour
     public float range = 10f;
 
     [Header("References")]
+    public Player player;
+
     public Transform firePoint;
     public LayerMask hitLayers;
     public AudioSource audioSource;
     public AudioClip shootSound;
     public GameObject hitEffect;
     public GameObject FireEffect;
-    public Transform GunPos;
-
-    HealthComponent health;
+    public Transform GunPos; // Used for visual flipping only
 
     private float nextFireTime;
 
-    // Called by Player script
-    public void SetFacing(bool facingRight)
+    void Start()
     {
-        if (facingRight)
-            GunPos.localRotation = Quaternion.Euler(0, 0, 0);   // face right
-        else
-        {
-            GunPos.localRotation = Quaternion.Euler(0, 180, 0); // face left
-          
-        }
+        player = GetComponentInParent<Player>();
+    }
+
+    // Visual flip only
+    public void SetFacing(bool right)
+    {
+        GunPos.localScale = new Vector3(right ? 1 : -1, 1, 1);
     }
 
     public void TryShoot()
@@ -40,43 +39,49 @@ public class GunScript : MonoBehaviour
         if (audioSource && shootSound)
             audioSource.PlayOneShot(shootSound);
 
-        // Raycast direction
-        Vector2 dir = GunPos.right;
+        Vector2 dir;
 
+        // Determine shooting direction
+        if (player.aimingUp)
+        {
+            dir = Vector2.up;
+        }
+        else
+        {
+            dir = player.facingRight ? Vector2.right : Vector2.left;
+        }
+
+        // Fire the ray
         RaycastHit2D hit = Physics2D.Raycast(firePoint.position, dir, range, hitLayers);
 
+        // Muzzle flash
+        if (FireEffect)
+        {
+            var fx = Instantiate(FireEffect, firePoint.position, Quaternion.identity);
+            Destroy(fx, 0.5f);
+        }
 
-            if(FireEffect)
-            {
-                GameObject fEffect = Instantiate(FireEffect,firePoint.position,Quaternion.identity);
-                Destroy(fEffect,0.5f);
-            }
-
+        // Hit effect & damage
         if (hit.collider != null)
         {
-            Debug.Log("Hit: " + hit.collider.name);
-
             if (hitEffect)
             {
-                GameObject effect = Instantiate(hitEffect, hit.point, Quaternion.identity);
-                Destroy(effect, 0.5f);
+                var fx2 = Instantiate(hitEffect, hit.point, Quaternion.identity);
+                Destroy(fx2, 0.5f);
             }
 
-              // OOP magic: works with ANY damageable object
             IDamageable dmg = hit.collider.GetComponent<IDamageable>();
             if (dmg != null)
                 dmg.TakeDamage(damage);
-
         }
     }
 
-    // Gizmo preview in Scene View
     void OnDrawGizmos()
     {
-        if (firePoint == null) return;
-
+        if (!firePoint) return;
 
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(firePoint.position, firePoint.position + GunPos.right * range);
+        Vector3 dir = player != null && player.aimingUp ? Vector3.up : (player != null && player.facingRight ? Vector3.right : Vector3.left);
+        Gizmos.DrawLine(firePoint.position, firePoint.position + dir * range);
     }
 }

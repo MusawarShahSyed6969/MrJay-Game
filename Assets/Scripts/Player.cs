@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-
 public class Player : HealthComponent
 {
     [Header("Movement Settings")]
@@ -10,8 +9,8 @@ public class Player : HealthComponent
     public float jumpForce = 7f;
 
     [Header("Gravity Settings")]
-    public float normalGravity = 1f;   // gravity while rising or grounded
-    public float fallGravity = 1.5f;     // stronger gravity when falling
+    public float normalGravity = 1f;
+    public float fallGravity = 1.5f;
 
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -23,23 +22,24 @@ public class Player : HealthComponent
     private AudioSource audioSource;
 
     [Header("References")]
-    public Transform spriteTransform; // child sprite to flip
+    public Transform BodyTransform;
+    public Transform GunTransform;
     public GunScript equippedGun;
-
-   public UnityEngine.UI.Image healthBarFill;
-
+    public Image healthBarFill;
 
     public Rigidbody2D rb;
+
+    [Header("State")]
+    public bool aimingUp = false;
+    public bool facingRight = true;
+
     private float moveInput;
-    private bool isGrounded;
     private bool isDead = false;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         audioSource = GetComponent<AudioSource>();
-
-        // set initial gravity
         rb.gravityScale = normalGravity;
     }
 
@@ -60,7 +60,6 @@ public class Player : HealthComponent
     void FixedUpdate()
     {
         if (isDead) return;
-
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
     }
 
@@ -68,53 +67,43 @@ public class Player : HealthComponent
     {
         moveInput = Input.GetAxisRaw("Horizontal");
 
-        // Flip sprite + tell gun to flip
+        // LEFT/RIGHT movement + flipping
         if (moveInput > 0)
         {
-            spriteTransform.localScale = new Vector3(1, 1, 1);
-            if (equippedGun) equippedGun.SetFacing(true);
+            facingRight = true;
+            BodyTransform.localRotation = Quaternion.Euler(0, 0, 0);
+            equippedGun.SetFacing(true);
         }
         else if (moveInput < 0)
         {
-            spriteTransform.localScale = new Vector3(-1, 1, 1);
-            if (equippedGun) equippedGun.SetFacing(false);
+            facingRight = false;
+            BodyTransform.localRotation = Quaternion.Euler(0, 180, 0);
+            equippedGun.SetFacing(false);
         }
 
-        // Ground check
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+        // AIM UP
+        aimingUp = Input.GetKey(KeyCode.W);
 
-        // Jump
-        if (Input.GetButtonDown("Jump") && isGrounded)
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+        GunTransform.localRotation = aimingUp ? Quaternion.Euler(0, 0, 90) : Quaternion.Euler(0, 0, 0);
     }
 
     void HandleGravity()
     {
-        // Only apply stronger gravity AFTER peak (when velocity is negative)
-        if (rb.linearVelocity.y < 0)
-        {
-            rb.gravityScale = fallGravity;
-        }
-        else
-        {
-            rb.gravityScale = normalGravity;
-        }
+        rb.gravityScale = rb.linearVelocity.y < 0 ? fallGravity : normalGravity;
     }
 
     void HandleShooting()
     {
         bool shoot = false;
 
-        // PC
         if (Input.mousePresent && Input.GetMouseButton(0))
             shoot = true;
-
-        // Mobile
         else if (Input.touchCount > 0 &&
-                 (Input.GetTouch(0).phase == TouchPhase.Began || Input.GetTouch(0).phase == TouchPhase.Moved))
+                (Input.GetTouch(0).phase == TouchPhase.Began ||
+                 Input.GetTouch(0).phase == TouchPhase.Moved))
             shoot = true;
 
-        if (shoot && equippedGun != null)
+        if (shoot)
             equippedGun.TryShoot();
     }
 
@@ -122,8 +111,9 @@ public class Player : HealthComponent
     {
         if (isDead) return;
         isDead = true;
+
         rb.linearVelocity = Vector2.zero;
-        Destroy(gameObject, 2f);
+
         if (deathSound && audioSource)
         {
             audioSource.PlayOneShot(deathSound);
@@ -133,6 +123,8 @@ public class Player : HealthComponent
         {
             RestartScene();
         }
+
+        Destroy(gameObject, 2f);
     }
 
     void RestartScene()
@@ -142,10 +134,6 @@ public class Player : HealthComponent
 
     protected override void Die()
     {
-        Debug.Log("Player died!");
-
-        Player player = GetComponent<Player>();
-        if (player)
-            player.KillPlayer();
+        KillPlayer();
     }
 }
