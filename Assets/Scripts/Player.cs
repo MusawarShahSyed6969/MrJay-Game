@@ -26,6 +26,7 @@ public class Player : HealthComponent
     public Transform GunTransform;
     public GunScript equippedGun;
     public Image healthBarFill;
+    private Animator anim;
 
     public Rigidbody2D rb;
 
@@ -40,6 +41,7 @@ public class Player : HealthComponent
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
         audioSource = GetComponent<AudioSource>();
         rb.gravityScale = normalGravity;
     }
@@ -72,14 +74,24 @@ public class Player : HealthComponent
         if (moveInput > 0)
         {
             facingRight = true;
+            anim.SetBool("isWalking",true);
+             anim.SetBool("isMovingRight",true);
             BodyTransform.localRotation = Quaternion.Euler(0, 0, 0);
             equippedGun.SetFacing(true);
         }
         else if (moveInput < 0)
         {
+            anim.SetBool("isWalking",true);
+            anim.SetBool("isMovingRight",false);
             facingRight = false;
             BodyTransform.localRotation = Quaternion.Euler(0, 180, 0);
             equippedGun.SetFacing(false);
+        }
+        else
+        {
+             anim.SetBool("isWalking",false);
+                        //   anim.SetBool("isMovingRight",true);
+
         }
 
         // Ground check
