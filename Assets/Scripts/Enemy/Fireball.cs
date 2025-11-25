@@ -4,7 +4,9 @@ public class Fireball : MonoBehaviour
 {
     public float speed = 5f;          // fireball movement speed
     public float lifetime = 4f;       // destroy after seconds
+    public float DamageAmount = 25f;
     private Vector2 direction;        // direction toward player
+    Player playerRef;
 
     void Start()
     {
@@ -31,5 +33,26 @@ public class Fireball : MonoBehaviour
     void Update()
     {
         transform.position += (Vector3)direction * speed * Time.deltaTime;
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.gameObject.tag == "Player")
+        {
+            if (!playerRef)
+            {
+                playerRef = other.GetComponent<Player>()
+          ?? other.GetComponentInParent<Player>()
+          ?? other.GetComponentInChildren<Player>();
+
+
+            }
+
+
+            playerRef.TakeDamage(DamageAmount);
+
+
+
+        }
     }
 }

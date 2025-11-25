@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 9138763759688893563}
   - component: {fileID: 930984377514576110}
   - component: {fileID: 6502325249920712600}
+  - component: {fileID: 4004754869622081337}
   m_Layer: 0
   m_Name: NoobEnemyProjectile
   m_TagString: Untagged
@@ -105,3 +106,40 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Fireball
   speed: 10
   lifetime: 4
+  DamageAmount: 25
+--- !u!58 &4004754869622081337
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2566537097877134187}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 3.19, y: -0.34}
+  m_Radius: 1.38

@@ -35,6 +35,7 @@ public class Player : HealthComponent
 
     private float moveInput;
     private bool isDead = false;
+    public bool isGrounded = true;
 
     void Start()
     {
@@ -80,6 +81,13 @@ public class Player : HealthComponent
             BodyTransform.localRotation = Quaternion.Euler(0, 180, 0);
             equippedGun.SetFacing(false);
         }
+
+        // Ground check
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+        
+        // Jump
+        if (Input.GetButtonDown("Jump") && isGrounded)
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
 
         // AIM UP
         aimingUp = Input.GetKey(KeyCode.W);
