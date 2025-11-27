@@ -10,6 +10,7 @@ public class NoobEnemy : EnemyScript
     public Transform pointB;
 
     [Header("Settings")]
+    public bool isWalkable = false;
     public float playerJumpSpeed = 2;
     public float shootingRange = 5f;
     public float shootingCooldown = 1.5f;
@@ -55,20 +56,24 @@ public class NoobEnemy : EnemyScript
 
     // ------------------------- SHOOTING ------------------------------
     IEnumerator ShootingRoutine()
+{
+    // Initial delay before shooting starts
+    yield return new WaitForSeconds(2f);
+
+    while (true)
     {
-        while (true)
+        if (playerpos != null)
         {
-            if (playerpos != null)
-            {
-                float dist = Vector2.Distance(transform.position, playerpos.position);
+            float dist = Vector2.Distance(transform.position, playerpos.position);
 
-                if (dist <= shootingRange)
-                    ShootToPlayer();
-            }
-
-            yield return new WaitForSeconds(shootingCooldown);
+            if (dist <= shootingRange)
+                ShootToPlayer();
         }
+
+        yield return new WaitForSeconds(shootingCooldown);
     }
+}
+
 
     void ShootToPlayer()
     {
@@ -81,7 +86,9 @@ public class NoobEnemy : EnemyScript
     // ------------------------- PATROL -------------------------------
     IEnumerator PatrolRoutine()
     {
-        while (true)
+        if(isWalkable)
+        {
+            while (true)
         {
             Vector3 target = goingToA ? pointA.position : pointB.position;
 
@@ -103,6 +110,7 @@ public class NoobEnemy : EnemyScript
             yield return new WaitForSeconds(waitTime);
 
             goingToA = !goingToA;
+        }
         }
     }
 
