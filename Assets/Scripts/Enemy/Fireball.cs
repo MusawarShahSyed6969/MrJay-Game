@@ -18,11 +18,11 @@ public class Fireball : MonoBehaviour
             Vector2 targetPos = player.transform.position;
             direction = (targetPos - (Vector2)transform.position).normalized;
 
-            Debug.Log("Fireball direction set toward player: " + direction);
+           
         }
         else
         {
-            Debug.LogError("ERROR: No Player found - Fireball cannot aim!");
+           
             direction = Vector2.right; // default fallback
         }
 
